@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>伴侣 AI — 桌面情绪伙伴</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="app">
+    <!-- 角色容器 -->
+    <div id="companion" class="companion idle">
+      <div class="companion-body">
+        <div class="companion-face">
+          <div class="eyes">
+            <div class="eye left"></div>
+            <div class="eye right"></div>
+          </div>
+          <div class="mouth"></div>
+        </div>
+        <div class="ears">
+          <div class="ear left"></div>
+          <div class="ear right"></div>
+        </div>
+      </div>
+      <div class="bubble" id="bubble"></div>
+    </div>
+
+    <!-- 状态栏 -->
+    <div id="status-bar">
+      <span id="status-text">休息中</span>
+      <span id="time-display"></span>
+    </div>
+
+    <!-- 对话框 -->
+    <div id="chat-panel" class="hidden">
+      <div id="chat-header">
+        <span>和伴侣聊天</span>
+        <button id="chat-close">×</button>
+      </div>
+      <div id="chat-messages"></div>
+      <div id="chat-input-area">
+        <input type="text" id="chat-input" placeholder="说点什么..." />
+        <button id="chat-send">发送</button>
+      </div>
+    </div>
+
+    <!-- 设置面板 -->
+    <div id="settings-panel" class="hidden">
+      <h3>设置</h3>
+      <label>
+        Claude API Key:
+        <input type="password" id="api-key" placeholder="sk-..." />
+      </label>
+      <label>
+        工作开始时间:
+        <input type="time" id="work-start" value="09:00" />
+      </label>
+      <label>
+        工作结束时间:
+        <input type="time" id="work-end" value="22:00" />
+      </label>
+      <button id="save-settings">保存</button>
+    </div>
+
+    <!-- 唤起按钮 -->
+    <button id="settings-btn">⚙️</button>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="state.js"></script>
+  <script src="api.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
