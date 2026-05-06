@@ -12,7 +12,7 @@ const Config = {
   // MiniMax API 配置
   MiniMax: {
     API_BASE: 'https://api.minimaxi.com/v1', // 中国区 endpoint
-    MODEL: 'MiniMax-Text-01',
+    MODEL: 'MiniMax-M2',
     MAX_TOKENS: 256
   },
 

@@ -22,6 +22,7 @@
     apiKey: null,
     minimaxApiKey: null,
     aiProvider: null,
+    minimaxModel: null,
     workStart: null,
     workEnd: null,
   };
@@ -78,8 +79,9 @@
     elements.settingsPanel = document.getElementById('settings-panel');
     elements.settingsSave = document.getElementById('save-settings');
     elements.apiKey = document.getElementById('api-key');
-    elements.minimaxApiKey = document.getElementById('minimax-api-key');
     elements.aiProvider = document.getElementById('ai-provider');
+    elements.minimaxApiKey = document.getElementById('minimax-api-key');
+    elements.minimaxModel = document.getElementById('minimax-model');
     elements.workStart = document.getElementById('work-start');
     elements.workEnd = document.getElementById('work-end');
 
@@ -87,6 +89,7 @@
     elements.apiKey.value = config.apiKey || '';
     elements.minimaxApiKey.value = config.minimaxApiKey || '';
     elements.aiProvider.value = config.aiProvider || 'claude';
+    elements.minimaxModel.value = config.minimaxModel || 'MiniMax-M2';
     elements.workStart.value = config.workStart || '09:00';
     elements.workEnd.value = config.workEnd || '22:00';
 
@@ -98,12 +101,15 @@
   function updateApiKeyVisibility(provider) {
     const claudeLabel = document.getElementById('claude-api-key-label');
     const minimaxLabel = document.getElementById('minimax-api-key-label');
+    const minimaxModelLabel = document.getElementById('minimax-model-label');
     if (provider === 'minimax') {
       claudeLabel.style.display = 'none';
       minimaxLabel.style.display = 'block';
+      minimaxModelLabel.style.display = 'block';
     } else {
       claudeLabel.style.display = 'block';
       minimaxLabel.style.display = 'none';
+      minimaxModelLabel.style.display = 'none';
     }
   }
 
@@ -200,6 +206,7 @@
       aiProvider: elements.aiProvider.value,
       apiKey: elements.apiKey.value.trim(),
       minimaxApiKey: elements.minimaxApiKey.value.trim(),
+      minimaxModel: elements.minimaxModel.value,
       workStart: elements.workStart.value,
       workEnd: elements.workEnd.value,
     };
