@@ -208,6 +208,48 @@ const AI = {
       }
       return { error: error.message };
     }
+  },
+
+  // 调用 MiniMax 音乐生成 API
+  async generateMusic(prompt) {
+    const apiKey = Config.getApiKey(Config.Provider.MINIMAX);
+    if (!apiKey) {
+      return { error: '请先在设置中配置 MiniMax API Key' };
+    }
+
+    const config = Config.load();
+    const model = config.musicModel || Config.MiniMax.MUSIC_DEFAULT_MODEL;
+
+    try {
+      const response = await fetch(`${Config.MiniMax.API_BASE}/musicGeneration`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model: model,
+          prompt: prompt
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        if (response.status === 401) {
+          return { error: 'MiniMax API Key 无效，请检查设置' };
+        }
+        return { error: `音乐生成失败: ${response.status}` };
+      }
+
+      const data = await response.json();
+      // MiniMax 音乐生成返回格式: { data: [{ url: "..." }] }
+      return { url: data.data?.[0]?.url || null };
+    } catch (error) {
+      if (error.message.includes('fetch')) {
+        return { error: '网络错误，请检查网络连接' };
+      }
+      return { error: error.message };
+    }
   }
 };
 

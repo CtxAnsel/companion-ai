@@ -25,6 +25,13 @@
     minimaxModel: null,
     workStart: null,
     workEnd: null,
+    musicBtn: null,
+    musicPanel: null,
+    musicClose: null,
+    musicModel: null,
+    musicPrompt: null,
+    musicGenerate: null,
+    musicResult: null,
   };
 
   // 配置
@@ -84,6 +91,13 @@
     elements.minimaxModel = document.getElementById('minimax-model');
     elements.workStart = document.getElementById('work-start');
     elements.workEnd = document.getElementById('work-end');
+    elements.musicBtn = document.getElementById('music-btn');
+    elements.musicPanel = document.getElementById('music-panel');
+    elements.musicClose = document.getElementById('music-close');
+    elements.musicModel = document.getElementById('music-model');
+    elements.musicPrompt = document.getElementById('music-prompt');
+    elements.musicGenerate = document.getElementById('music-generate');
+    elements.musicResult = document.getElementById('music-result');
 
     // 填充已有设置
     elements.apiKey.value = config.apiKey || '';
@@ -92,9 +106,23 @@
     elements.minimaxModel.value = config.minimaxModel || 'MiniMax-M2';
     elements.workStart.value = config.workStart || '09:00';
     elements.workEnd.value = config.workEnd || '22:00';
+    elements.musicModel.value = config.musicModel || 'music-2.5';
 
     // 根据当前 provider 显示/隐藏对应的 API Key 输入框
     updateApiKeyVisibility(config.aiProvider || 'claude');
+
+    // 根据当前 provider 显示/隐藏音乐按钮
+    updateMusicButtonVisibility(config.aiProvider || 'claude');
+  }
+
+  // 根据选择的 Provider 显示/隐藏音乐按钮
+  function updateMusicButtonVisibility(provider) {
+    if (provider === 'minimax') {
+      elements.musicBtn.style.display = 'block';
+    } else {
+      elements.musicBtn.style.display = 'none';
+      elements.musicPanel.classList.add('hidden');
+    }
   }
 
   // 根据选择的 Provider 显示/隐藏对应的 API Key 输入框
@@ -142,7 +170,17 @@
     // AI Provider 切换事件
     elements.aiProvider.addEventListener('change', (e) => {
       updateApiKeyVisibility(e.target.value);
+      updateMusicButtonVisibility(e.target.value);
     });
+
+    // 音乐面板事件
+    elements.musicBtn.addEventListener('click', () => {
+      elements.musicPanel.classList.toggle('hidden');
+    });
+    elements.musicClose.addEventListener('click', () => {
+      elements.musicPanel.classList.add('hidden');
+    });
+    elements.musicGenerate.addEventListener('click', generateMusic);
 
     // 键盘活动监听
     document.addEventListener('keypress', () => {
@@ -207,6 +245,7 @@
       apiKey: elements.apiKey.value.trim(),
       minimaxApiKey: elements.minimaxApiKey.value.trim(),
       minimaxModel: elements.minimaxModel.value,
+      musicModel: elements.musicModel.value,
       workStart: elements.workStart.value,
       workEnd: elements.workEnd.value,
     };
@@ -268,6 +307,42 @@
       second: '2-digit',
     });
     elements.timeDisplay.textContent = timeStr;
+  }
+
+  // 生成音乐
+  async function generateMusic() {
+    const prompt = elements.musicPrompt.value.trim();
+    if (!prompt) {
+      elements.musicResult.innerHTML = '<span style="color:red;">请输入音乐描述</span>';
+      return;
+    }
+
+    elements.musicGenerate.disabled = true;
+    elements.musicResult.innerHTML = '🎵 正在生成音乐...';
+
+    try {
+      const response = await AI.generateMusic(prompt);
+
+      if (response.error) {
+        elements.musicResult.innerHTML = `<span style="color:red;">${response.error}</span>`;
+      } else if (response.url) {
+        elements.musicResult.innerHTML = `
+          <div style="margin-top:10px;">
+            <audio controls src="${response.url}">
+              您的浏览器不支持音频播放
+            </audio>
+            <br/>
+            <a href="${response.url}" target="_blank" download>下载音乐</a>
+          </div>
+        `;
+      } else {
+        elements.musicResult.innerHTML = '<span style="color:red;">生成失败，请重试</span>';
+      }
+    } catch (error) {
+      elements.musicResult.innerHTML = `<span style="color:red;">错误: ${error.message}</span>`;
+    } finally {
+      elements.musicGenerate.disabled = false;
+    }
   }
 
   // 调度定时提醒
