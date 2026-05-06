@@ -13,7 +13,10 @@ const Config = {
   MiniMax: {
     API_BASE: 'https://api.minimaxi.com/v1', // 中国区 endpoint
     MODEL: 'MiniMax-M2',
-    MAX_TOKENS: 256
+    MAX_TOKENS: 256,
+    // 音乐生成配置
+    MUSIC_MODELS: ['music-2.0', 'music-2.5', 'music-2.5+'],
+    MUSIC_DEFAULT_MODEL: 'music-2.5'
   },
 
   // 默认配置

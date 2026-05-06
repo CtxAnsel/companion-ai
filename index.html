@@ -45,6 +45,31 @@
       </div>
     </div>
 
+    <!-- 音乐生成面板 -->
+    <div id="music-panel" class="hidden">
+      <div id="music-header">
+        <span>生成音乐</span>
+        <button id="music-close">×</button>
+      </div>
+      <div id="music-content">
+        <div id="music-model-section">
+          <label>
+            音乐模型:
+            <select id="music-model">
+              <option value="music-2.5">music-2.5 (默认)</option>
+              <option value="music-2.0">music-2.0</option>
+              <option value="music-2.5+">music-2.5+</option>
+            </select>
+          </label>
+        </div>
+        <div id="music-prompt-section">
+          <textarea id="music-prompt" placeholder="描述你想生成的音乐... 如：欢快的钢琴曲"></textarea>
+        </div>
+        <button id="music-generate">生成</button>
+        <div id="music-result"></div>
+      </div>
+    </div>
+
     <!-- 设置面板 -->
     <div id="settings-panel" class="hidden">
       <h3>设置</h3>
@@ -90,6 +115,7 @@
 
     <!-- 唤起按钮 -->
     <button id="settings-btn">⚙️</button>
+    <button id="music-btn" style="display:none;">🎵</button>
   </div>
 
   <script src="config.js"></script>
