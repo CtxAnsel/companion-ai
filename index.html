@@ -49,8 +49,19 @@
     <div id="settings-panel" class="hidden">
       <h3>设置</h3>
       <label>
+        AI 提供商:
+        <select id="ai-provider">
+          <option value="claude">Claude</option>
+          <option value="minimax">MiniMax</option>
+        </select>
+      </label>
+      <label id="claude-api-key-label">
         Claude API Key:
         <input type="password" id="api-key" placeholder="sk-..." />
+      </label>
+      <label id="minimax-api-key-label" style="display:none;">
+        MiniMax API Key:
+        <input type="password" id="minimax-api-key" placeholder="输入 MiniMax API Key" />
       </label>
       <label>
         工作开始时间:

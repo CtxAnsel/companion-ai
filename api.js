@@ -78,8 +78,20 @@ const AI = {
     return msg;
   },
 
-  // 调用 Claude API 进行对话
+  // 调用 AI API 进行对话（支持多 Provider）
   async chat(userMessage) {
+    const provider = Config.getProvider();
+
+    if (provider === Config.Provider.MINIMAX) {
+      return this.chatMiniMax(userMessage);
+    }
+
+    // 默认使用 Claude
+    return this.chatClaude(userMessage);
+  },
+
+  // 调用 Claude API 进行对话
+  async chatClaude(userMessage) {
     const apiKey = Config.getApiKey();
     if (!apiKey) {
       return { error: '请先在设置中配置 Claude API Key' };
@@ -129,6 +141,64 @@ const AI = {
 
       const data = await response.json();
       return { message: data.content?.[0]?.text || '...' };
+    } catch (error) {
+      if (error.message.includes('fetch')) {
+        return { error: '网络错误，请检查网络连接' };
+      }
+      return { error: error.message };
+    }
+  },
+
+  // 调用 MiniMax API 进行对话
+  async chatMiniMax(userMessage) {
+    const apiKey = Config.getApiKey(Config.Provider.MINIMAX);
+    if (!apiKey) {
+      return { error: '请先在设置中配置 MiniMax API Key' };
+    }
+
+    const systemPrompt = `你是「伴侣」，一个为程序员设计的桌面情绪伴侣 AI。
+
+你的特点：
+- 温暖、贴心、有点调皮
+- 会关心主人的工作状态
+- 知道什么时候该提醒休息
+- 说话简短（1-3句话），不啰嗦
+- 语气自然，像朋友聊天
+- 会用 emoji 表情
+
+当前时间：${new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}
+
+状态：${State.getStatusText()}
+连续工作时长：${State.getConsecutiveHours().toFixed(1)}小时`;
+
+    try {
+      const response = await fetch(`${Config.MiniMax.API_BASE}/text/chatcompletion_v2`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model: Config.MiniMax.MODEL,
+          max_tokens: Config.MiniMax.MAX_TOKENS,
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userMessage }
+          ]
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        if (response.status === 401) {
+          return { error: 'MiniMax API Key 无效，请检查设置' };
+        }
+        return { error: `MiniMax API 调用失败: ${response.status}` };
+      }
+
+      const data = await response.json();
+      // MiniMax 返回格式: { choices: [{ message: { content: "..." } }] }
+      return { message: data.choices?.[0]?.message?.content || '...' };
     } catch (error) {
       if (error.message.includes('fetch')) {
         return { error: '网络错误，请检查网络连接' };
