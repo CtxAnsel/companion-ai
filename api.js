@@ -156,6 +156,9 @@ const AI = {
       return { error: '请先在设置中配置 MiniMax API Key' };
     }
 
+    const config = Config.load();
+    const model = config.minimaxModel || Config.MiniMax.MODEL;
+
     const systemPrompt = `你是「伴侣」，一个为程序员设计的桌面情绪伴侣 AI。
 
 你的特点：
@@ -179,7 +182,7 @@ const AI = {
           'Authorization': `Bearer ${apiKey}`
         },
         body: JSON.stringify({
-          model: Config.MiniMax.MODEL,
+          model: model,
           max_tokens: Config.MiniMax.MAX_TOKENS,
           messages: [
             { role: 'system', content: systemPrompt },
