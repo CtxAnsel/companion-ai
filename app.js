@@ -106,7 +106,7 @@
     elements.minimaxModel.value = config.minimaxModel || 'MiniMax-M2';
     elements.workStart.value = config.workStart || '09:00';
     elements.workEnd.value = config.workEnd || '22:00';
-    elements.musicModel.value = config.musicModel || 'music-2.5';
+    elements.musicModel.value = config.musicModel || 'music-2.6';
 
     // 根据当前 provider 显示/隐藏对应的 API Key 输入框
     updateApiKeyVisibility(config.aiProvider || 'claude');
@@ -325,14 +325,19 @@
 
       if (response.error) {
         elements.musicResult.innerHTML = `<span style="color:red;">${response.error}</span>`;
-      } else if (response.url) {
+      } else if (response.audioHex) {
+        // 将 hex 编码的音频数据转换为 Blob
+        const audioData = new Uint8Array(response.audioHex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
+        const audioBlob = new Blob([audioData], { type: 'audio/mp3' });
+        const audioUrl = URL.createObjectURL(audioBlob);
+
         elements.musicResult.innerHTML = `
           <div style="margin-top:10px;">
-            <audio controls src="${response.url}">
+            <audio controls src="${audioUrl}">
               您的浏览器不支持音频播放
             </audio>
             <br/>
-            <a href="${response.url}" target="_blank" download>下载音乐</a>
+            <a href="${audioUrl}" download="music.mp3">下载音乐</a>
           </div>
         `;
       } else {

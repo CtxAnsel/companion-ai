@@ -15,8 +15,8 @@ const Config = {
     MODEL: 'MiniMax-M2',
     MAX_TOKENS: 256,
     // 音乐生成配置
-    MUSIC_MODELS: ['music-2.0', 'music-2.5', 'music-2.5+'],
-    MUSIC_DEFAULT_MODEL: 'music-2.5'
+    MUSIC_MODELS: ['music-2.6', 'music-2.6-free'],
+    MUSIC_DEFAULT_MODEL: 'music-2.6'
   },
 
   // 默认配置

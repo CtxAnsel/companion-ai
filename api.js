@@ -221,7 +221,7 @@ const AI = {
     const model = config.musicModel || Config.MiniMax.MUSIC_DEFAULT_MODEL;
 
     try {
-      const response = await fetch(`${Config.MiniMax.API_BASE}/musicGeneration`, {
+      const response = await fetch(`${Config.MiniMax.API_BASE}/music_generation`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -242,8 +242,12 @@ const AI = {
       }
 
       const data = await response.json();
-      // MiniMax 音乐生成返回格式: { data: [{ url: "..." }] }
-      return { url: data.data?.[0]?.url || null };
+      // MiniMax 音乐生成返回格式: { data: { audio: "hex编码的音频数据", status: 2 }, ... }
+      // status: 2 表示成功
+      if (data.data && data.data.status === 2 && data.data.audio) {
+        return { audioHex: data.data.audio, status: 2 };
+      }
+      return { error: '音乐生成失败，请重试' };
     } catch (error) {
       if (error.message.includes('fetch')) {
         return { error: '网络错误，请检查网络连接' };
