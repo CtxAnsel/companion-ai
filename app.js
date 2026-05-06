@@ -20,6 +20,8 @@
     settingsPanel: null,
     settingsSave: null,
     apiKey: null,
+    minimaxApiKey: null,
+    aiProvider: null,
     workStart: null,
     workEnd: null,
   };
@@ -76,13 +78,33 @@
     elements.settingsPanel = document.getElementById('settings-panel');
     elements.settingsSave = document.getElementById('save-settings');
     elements.apiKey = document.getElementById('api-key');
+    elements.minimaxApiKey = document.getElementById('minimax-api-key');
+    elements.aiProvider = document.getElementById('ai-provider');
     elements.workStart = document.getElementById('work-start');
     elements.workEnd = document.getElementById('work-end');
 
     // 填充已有设置
     elements.apiKey.value = config.apiKey || '';
+    elements.minimaxApiKey.value = config.minimaxApiKey || '';
+    elements.aiProvider.value = config.aiProvider || 'claude';
     elements.workStart.value = config.workStart || '09:00';
     elements.workEnd.value = config.workEnd || '22:00';
+
+    // 根据当前 provider 显示/隐藏对应的 API Key 输入框
+    updateApiKeyVisibility(config.aiProvider || 'claude');
+  }
+
+  // 根据选择的 Provider 显示/隐藏对应的 API Key 输入框
+  function updateApiKeyVisibility(provider) {
+    const claudeLabel = document.getElementById('claude-api-key-label');
+    const minimaxLabel = document.getElementById('minimax-api-key-label');
+    if (provider === 'minimax') {
+      claudeLabel.style.display = 'none';
+      minimaxLabel.style.display = 'block';
+    } else {
+      claudeLabel.style.display = 'block';
+      minimaxLabel.style.display = 'none';
+    }
   }
 
   // 绑定事件
@@ -110,6 +132,11 @@
 
     // 保存设置
     elements.settingsSave.addEventListener('click', saveSettings);
+
+    // AI Provider 切换事件
+    elements.aiProvider.addEventListener('change', (e) => {
+      updateApiKeyVisibility(e.target.value);
+    });
 
     // 键盘活动监听
     document.addEventListener('keypress', () => {
@@ -170,7 +197,9 @@
   function saveSettings() {
     config = {
       ...config,
+      aiProvider: elements.aiProvider.value,
       apiKey: elements.apiKey.value.trim(),
+      minimaxApiKey: elements.minimaxApiKey.value.trim(),
       workStart: elements.workStart.value,
       workEnd: elements.workEnd.value,
     };

@@ -3,9 +3,23 @@
 // ============================================
 
 const Config = {
+  // AI Provider 枚举
+  Provider: {
+    CLAUDE: 'claude',
+    MINIMAX: 'minimax'
+  },
+
+  // MiniMax API 配置
+  MiniMax: {
+    API_BASE: 'https://api.minimaxi.com/v1', // 中国区 endpoint
+    MODEL: 'MiniMax-Text-01',
+    MAX_TOKENS: 256
+  },
+
   // 默认配置
   defaults: {
     apiKey: '',
+    aiProvider: 'claude', // 默认使用 Claude
     workStart: '09:00',
     workEnd: '22:00',
     checkInterval: 30000, // 30秒检查一次状态
@@ -36,12 +50,26 @@ const Config = {
   },
 
   // 获取 API Key（优先从配置读取，否则从环境变量）
-  getApiKey() {
+  getApiKey(provider = null) {
     const config = this.load();
+    const aiProvider = provider || config.aiProvider || this.defaults.aiProvider;
+
+    // 根据 provider 返回对应的 API Key
+    if (aiProvider === this.Provider.MINIMAX) {
+      if (config.minimaxApiKey) return config.minimaxApiKey;
+      if (typeof ENV !== 'undefined' && ENV.MINIMAX_API_KEY) return ENV.MINIMAX_API_KEY;
+    }
+
+    // Claude 作为默认
     if (config.apiKey) return config.apiKey;
-    // 兼容环境变量
     if (typeof ENV !== 'undefined' && ENV.CLAUDE_API_KEY) return ENV.CLAUDE_API_KEY;
     return null;
+  },
+
+  // 获取当前 AI Provider
+  getProvider() {
+    const config = this.load();
+    return config.aiProvider || this.defaults.aiProvider;
   }
 };
 
