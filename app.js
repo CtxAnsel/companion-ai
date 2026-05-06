@@ -30,6 +30,7 @@
     musicClose: null,
     musicModel: null,
     musicPrompt: null,
+    musicLyrics: null,
     musicGenerate: null,
     musicResult: null,
   };
@@ -96,6 +97,7 @@
     elements.musicClose = document.getElementById('music-close');
     elements.musicModel = document.getElementById('music-model');
     elements.musicPrompt = document.getElementById('music-prompt');
+    elements.musicLyrics = document.getElementById('music-lyrics');
     elements.musicGenerate = document.getElementById('music-generate');
     elements.musicResult = document.getElementById('music-result');
 
@@ -312,6 +314,7 @@
   // 生成音乐
   async function generateMusic() {
     const prompt = elements.musicPrompt.value.trim();
+    const lyrics = elements.musicLyrics.value.trim();
     if (!prompt) {
       elements.musicResult.innerHTML = '<span style="color:red;">请输入音乐描述</span>';
       return;
@@ -321,7 +324,7 @@
     elements.musicResult.innerHTML = '🎵 正在生成音乐...';
 
     try {
-      const response = await AI.generateMusic(prompt);
+      const response = await AI.generateMusic(prompt, lyrics);
 
       if (response.error) {
         elements.musicResult.innerHTML = `<span style="color:red;">${response.error}</span>`;

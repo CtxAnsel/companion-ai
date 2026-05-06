@@ -211,7 +211,7 @@ const AI = {
   },
 
   // 调用 MiniMax 音乐生成 API
-  async generateMusic(prompt) {
+  async generateMusic(prompt, lyrics = '') {
     const apiKey = Config.getApiKey(Config.Provider.MINIMAX);
     if (!apiKey) {
       return { error: '请先在设置中配置 MiniMax API Key' };
@@ -229,7 +229,8 @@ const AI = {
         },
         body: JSON.stringify({
           model: model,
-          prompt: prompt
+          prompt: prompt,
+          lyrics: lyrics || undefined
         })
       });
 
