@@ -211,7 +211,7 @@ const AI = {
   },
 
   // 调用 MiniMax 音乐生成 API
-  async generateMusic(prompt) {
+  async generateMusic(prompt, lyrics = null) {
     const apiKey = Config.getApiKey(Config.Provider.MINIMAX);
     if (!apiKey) {
       return { error: '请先在设置中配置 MiniMax API Key' };
@@ -221,16 +221,23 @@ const AI = {
     const model = config.musicModel || 'music-2.5';
 
     try {
+      const requestBody = {
+        model: model,
+        prompt: prompt
+      };
+
+      // 如果提供了歌词，添加到请求中
+      if (lyrics) {
+        requestBody.lyrics = lyrics;
+      }
+
       const response = await fetch(`${Config.MiniMax.API_BASE}/music_generation`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${apiKey}`
         },
-        body: JSON.stringify({
-          model: model,
-          prompt: prompt
-        })
+        body: JSON.stringify(requestBody)
       });
 
       if (!response.ok) {

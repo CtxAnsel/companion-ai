@@ -376,6 +376,7 @@
 
   // 生成歌词
   let currentLyrics = '';
+  let currentLyricsForMusic = null;  // 存储要用于生成音乐的歌词
 
   async function generateLyrics() {
     const theme = elements.lyricsTheme.value.trim();
@@ -395,6 +396,7 @@
         elements.lyricsResult.innerHTML = `<span style="color:red;">${response.error}</span>`;
       } else if (response.lyrics) {
         currentLyrics = response.lyrics;
+        currentLyricsForMusic = response.lyrics;  // 保存歌词用于生成音乐
         elements.lyricsResult.innerHTML = `<pre style="white-space:pre-wrap;word-wrap:break-word;max-height:200px;overflow-y:auto;background:var(--bg-dark);padding:10px;border-radius:8px;margin:10px 0;">${currentLyrics}</pre>`;
         elements.lyricsMusicSection.classList.remove('hidden');
       } else {
@@ -414,16 +416,50 @@
     // 关闭歌词面板
     elements.lyricsPanel.classList.add('hidden');
 
-    // 打开音乐面板并填入歌词
+    // 打开音乐面板，prompt用歌词描述，lyrics参数单独传递
     elements.musicPanel.classList.remove('hidden');
-    elements.musicPrompt.value = currentLyrics;
+    elements.musicPrompt.value = '根据以下歌词生成音乐';  // prompt只是描述
     elements.musicResult.innerHTML = '';
 
-    // 清空歌词
+    // 清空歌词显示但保留用于生成
+    const lyricsToUse = currentLyrics;
     currentLyrics = '';
     elements.lyricsTheme.value = '';
     elements.lyricsResult.innerHTML = '';
     elements.lyricsMusicSection.classList.add('hidden');
+
+    // 直接用歌词生成音乐
+    generateMusicWithLyrics('根据歌词生成音乐', lyricsToUse);
+  }
+
+  // 使用指定歌词生成音乐
+  async function generateMusicWithLyrics(prompt, lyrics) {
+    elements.musicGenerate.disabled = true;
+    elements.musicResult.innerHTML = '🎵 正在生成音乐...';
+
+    try {
+      const response = await AI.generateMusic(prompt, lyrics);
+
+      if (response.error) {
+        elements.musicResult.innerHTML = `<span style="color:red;">${response.error}</span>`;
+      } else if (response.url) {
+        elements.musicResult.innerHTML = `
+          <div style="margin-top:10px;">
+            <audio controls src="${response.url}">
+              您的浏览器不支持音频播放
+            </audio>
+            <br/>
+            <a href="${response.url}" target="_blank" download>下载音乐</a>
+          </div>
+        `;
+      } else {
+        elements.musicResult.innerHTML = '<span style="color:red;">生成失败，请重试</span>';
+      }
+    } catch (error) {
+      elements.musicResult.innerHTML = `<span style="color:red;">错误: ${error.message}</span>`;
+    } finally {
+      elements.musicGenerate.disabled = false;
+    }
   }
 
   // 调度定时提醒
