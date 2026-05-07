@@ -250,6 +250,60 @@ const AI = {
       }
       return { error: error.message };
     }
+  },
+
+  // 生成歌词
+  async generateLyrics(theme) {
+    const apiKey = Config.getApiKey(Config.Provider.MINIMAX);
+    if (!apiKey) {
+      return { error: '请先在设置中配置 MiniMax API Key' };
+    }
+
+    const config = Config.load();
+    const model = config.minimaxModel || 'MiniMax-M2';
+
+    const systemPrompt = `你是一位专业的歌词创作者。根据用户给定的主题，创作一首歌词。
+
+要求：
+- 歌词要有情感、有画面感
+- 长度适中（8-16句为宜）
+- 押韵、朗朗上口
+- 可以包含主歌和副歌结构
+- 直接输出歌词内容，不要额外的解释说明`;
+
+    try {
+      const response = await fetch(`${Config.MiniMax.API_BASE}/text/chatcompletion_v2`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model: model,
+          max_tokens: 512,
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: `请为主题「${theme}」创作歌词` }
+          ]
+        })
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          return { error: 'MiniMax API Key 无效，请检查设置' };
+        }
+        return { error: `歌词生成失败: ${response.status}` };
+      }
+
+      const data = await response.json();
+      const lyrics = data.choices?.[0]?.message?.content || '';
+      return { lyrics: lyrics.trim() };
+    } catch (error) {
+      if (error.message.includes('fetch')) {
+        return { error: '网络错误，请检查网络连接' };
+      }
+      return { error: error.message };
+    }
   }
 };
 

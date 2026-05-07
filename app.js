@@ -32,6 +32,14 @@
     musicPrompt: null,
     musicGenerate: null,
     musicResult: null,
+    lyricsBtn: null,
+    lyricsPanel: null,
+    lyricsClose: null,
+    lyricsTheme: null,
+    lyricsGenerate: null,
+    lyricsResult: null,
+    lyricsMusicSection: null,
+    lyricsToMusic: null,
   };
 
   // 配置
@@ -98,6 +106,14 @@
     elements.musicPrompt = document.getElementById('music-prompt');
     elements.musicGenerate = document.getElementById('music-generate');
     elements.musicResult = document.getElementById('music-result');
+    elements.lyricsBtn = document.getElementById('lyrics-btn');
+    elements.lyricsPanel = document.getElementById('lyrics-panel');
+    elements.lyricsClose = document.getElementById('lyrics-close');
+    elements.lyricsTheme = document.getElementById('lyrics-theme');
+    elements.lyricsGenerate = document.getElementById('lyrics-generate');
+    elements.lyricsResult = document.getElementById('lyrics-result');
+    elements.lyricsMusicSection = document.getElementById('lyrics-music-section');
+    elements.lyricsToMusic = document.getElementById('lyrics-to-music');
 
     // 填充已有设置
     elements.apiKey.value = config.apiKey || '';
@@ -119,9 +135,12 @@
   function updateMusicButtonVisibility(provider) {
     if (provider === 'minimax') {
       elements.musicBtn.style.display = 'block';
+      elements.lyricsBtn.style.display = 'block';
     } else {
       elements.musicBtn.style.display = 'none';
+      elements.lyricsBtn.style.display = 'none';
       elements.musicPanel.classList.add('hidden');
+      elements.lyricsPanel.classList.add('hidden');
     }
   }
 
@@ -181,6 +200,16 @@
       elements.musicPanel.classList.add('hidden');
     });
     elements.musicGenerate.addEventListener('click', generateMusic);
+
+    // 歌词面板事件
+    elements.lyricsBtn.addEventListener('click', () => {
+      elements.lyricsPanel.classList.toggle('hidden');
+    });
+    elements.lyricsClose.addEventListener('click', () => {
+      elements.lyricsPanel.classList.add('hidden');
+    });
+    elements.lyricsGenerate.addEventListener('click', generateLyrics);
+    elements.lyricsToMusic.addEventListener('click', useLyricsForMusic);
 
     // 键盘活动监听
     document.addEventListener('keypress', () => {
@@ -343,6 +372,58 @@
     } finally {
       elements.musicGenerate.disabled = false;
     }
+  }
+
+  // 生成歌词
+  let currentLyrics = '';
+
+  async function generateLyrics() {
+    const theme = elements.lyricsTheme.value.trim();
+    if (!theme) {
+      elements.lyricsResult.innerHTML = '<span style="color:red;">请输入歌词主题</span>';
+      return;
+    }
+
+    elements.lyricsGenerate.disabled = true;
+    elements.lyricsResult.innerHTML = '📝 正在生成歌词...';
+    elements.lyricsMusicSection.classList.add('hidden');
+
+    try {
+      const response = await AI.generateLyrics(theme);
+
+      if (response.error) {
+        elements.lyricsResult.innerHTML = `<span style="color:red;">${response.error}</span>`;
+      } else if (response.lyrics) {
+        currentLyrics = response.lyrics;
+        elements.lyricsResult.innerHTML = `<pre style="white-space:pre-wrap;word-wrap:break-word;max-height:200px;overflow-y:auto;background:var(--bg-dark);padding:10px;border-radius:8px;margin:10px 0;">${currentLyrics}</pre>`;
+        elements.lyricsMusicSection.classList.remove('hidden');
+      } else {
+        elements.lyricsResult.innerHTML = '<span style="color:red;">生成失败，请重试</span>';
+      }
+    } catch (error) {
+      elements.lyricsResult.innerHTML = `<span style="color:red;">错误: ${error.message}</span>`;
+    } finally {
+      elements.lyricsGenerate.disabled = false;
+    }
+  }
+
+  // 用歌词生成音乐
+  function useLyricsForMusic() {
+    if (!currentLyrics) return;
+
+    // 关闭歌词面板
+    elements.lyricsPanel.classList.add('hidden');
+
+    // 打开音乐面板并填入歌词
+    elements.musicPanel.classList.remove('hidden');
+    elements.musicPrompt.value = currentLyrics;
+    elements.musicResult.innerHTML = '';
+
+    // 清空歌词
+    currentLyrics = '';
+    elements.lyricsTheme.value = '';
+    elements.lyricsResult.innerHTML = '';
+    elements.lyricsMusicSection.classList.add('hidden');
   }
 
   // 调度定时提醒

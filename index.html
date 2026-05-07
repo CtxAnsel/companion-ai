@@ -45,6 +45,24 @@
       </div>
     </div>
 
+    <!-- 歌词生成面板 -->
+    <div id="lyrics-panel" class="hidden">
+      <div id="lyrics-header">
+        <span>AI 歌词生成</span>
+        <button id="lyrics-close">×</button>
+      </div>
+      <div id="lyrics-content">
+        <div id="lyrics-theme-section">
+          <textarea id="lyrics-theme" placeholder="输入歌词主题... 如：思念、梦想、春天"></textarea>
+        </div>
+        <button id="lyrics-generate">生成歌词</button>
+        <div id="lyrics-result"></div>
+        <div id="lyrics-music-section" class="hidden">
+          <button id="lyrics-to-music">用歌词生成音乐</button>
+        </div>
+      </div>
+    </div>
+
     <!-- 音乐生成面板 -->
     <div id="music-panel" class="hidden">
       <div id="music-header">
@@ -115,6 +133,7 @@
 
     <!-- 唤起按钮 -->
     <button id="settings-btn">⚙️</button>
+    <button id="lyrics-btn" style="display:none;">📝</button>
     <button id="music-btn" style="display:none;">🎵</button>
   </div>
 
