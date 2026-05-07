@@ -416,9 +416,8 @@
     // 关闭歌词面板
     elements.lyricsPanel.classList.add('hidden');
 
-    // 打开音乐面板，prompt用歌词描述，lyrics参数单独传递
+    // 打开音乐面板
     elements.musicPanel.classList.remove('hidden');
-    elements.musicPrompt.value = '根据以下歌词生成音乐';  // prompt只是描述
     elements.musicResult.innerHTML = '';
 
     // 清空歌词显示但保留用于生成
@@ -428,17 +427,17 @@
     elements.lyricsResult.innerHTML = '';
     elements.lyricsMusicSection.classList.add('hidden');
 
-    // 直接用歌词生成音乐
-    generateMusicWithLyrics('根据歌词生成音乐', lyricsToUse);
+    // 直接用歌词生成音乐（prompt描述音乐风格，lyrics传歌词）
+    generateMusicWithLyrics('抒情，温柔，流行', lyricsToUse);
   }
 
   // 使用指定歌词生成音乐
-  async function generateMusicWithLyrics(prompt, lyrics) {
+  async function generateMusicWithLyrics(stylePrompt, lyrics) {
     elements.musicGenerate.disabled = true;
     elements.musicResult.innerHTML = '🎵 正在生成音乐...';
 
     try {
-      const response = await AI.generateMusic(prompt, lyrics);
+      const response = await AI.generateMusic(stylePrompt, lyrics);
 
       if (response.error) {
         elements.musicResult.innerHTML = `<span style="color:red;">${response.error}</span>`;
