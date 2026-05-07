@@ -411,7 +411,11 @@
 
   // 用歌词生成音乐
   function useLyricsForMusic() {
-    if (!currentLyrics) return;
+    const lyricsToUse = currentLyrics;
+    if (!lyricsToUse || !lyricsToUse.trim()) {
+      elements.lyricsResult.innerHTML = '<span style="color:red;">请先生成歌词</span>';
+      return;
+    }
 
     // 关闭歌词面板
     elements.lyricsPanel.classList.add('hidden');
@@ -421,7 +425,6 @@
     elements.musicResult.innerHTML = '';
 
     // 清空歌词显示但保留用于生成
-    const lyricsToUse = currentLyrics;
     currentLyrics = '';
     elements.lyricsTheme.value = '';
     elements.lyricsResult.innerHTML = '';
