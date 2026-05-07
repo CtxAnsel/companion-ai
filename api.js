@@ -218,10 +218,10 @@ const AI = {
     }
 
     const config = Config.load();
-    const model = config.musicModel || Config.MiniMax.MUSIC_DEFAULT_MODEL;
+    const model = config.musicModel || 'music-2.5';
 
     try {
-      const response = await fetch(`${Config.MiniMax.API_BASE}/musicGeneration`, {
+      const response = await fetch(`${Config.MiniMax.API_BASE}/music_generation`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -234,7 +234,6 @@ const AI = {
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
         if (response.status === 401) {
           return { error: 'MiniMax API Key 无效，请检查设置' };
         }
@@ -242,8 +241,14 @@ const AI = {
       }
 
       const data = await response.json();
-      // MiniMax 音乐生成返回格式: { data: [{ url: "..." }] }
-      return { url: data.data?.[0]?.url || null };
+      // MiniMax 音乐生成返回格式: { data: { audio: "hex编码", status: 2 } }
+      // status=2 表示生成完成，audio 是 hex 编码的音频数据
+      if (data.data?.audio) {
+        // 将 hex 音频数据转换为可播放的 URL
+        const audioUrl = this.hexToAudioUrl(data.data.audio);
+        return { url: audioUrl };
+      }
+      return { error: '生成失败，请重试' };
     } catch (error) {
       if (error.message.includes('fetch')) {
         return { error: '网络错误，请检查网络连接' };
@@ -252,39 +257,33 @@ const AI = {
     }
   },
 
-  // 生成歌词
+  // 将 hex 编码的音频数据转换为可播放的 URL
+  hexToAudioUrl(hexString) {
+    const bytes = new Uint8Array(hexString.length / 2);
+    for (let i = 0; i < hexString.length; i += 2) {
+      bytes[i / 2] = parseInt(hexString.substr(i, 2), 16);
+    }
+    const blob = new Blob([bytes], { type: 'audio/mp3' });
+    return URL.createObjectURL(blob);
+  },
+
+  // 生成歌词（使用 MiniMax 专用歌词生成 API）
   async generateLyrics(theme) {
     const apiKey = Config.getApiKey(Config.Provider.MINIMAX);
     if (!apiKey) {
       return { error: '请先在设置中配置 MiniMax API Key' };
     }
 
-    const config = Config.load();
-    const model = config.minimaxModel || 'MiniMax-M2';
-
-    const systemPrompt = `你是一位专业的歌词创作者。根据用户给定的主题，创作一首歌词。
-
-要求：
-- 歌词要有情感、有画面感
-- 长度适中（8-16句为宜）
-- 押韵、朗朗上口
-- 可以包含主歌和副歌结构
-- 直接输出歌词内容，不要额外的解释说明`;
-
     try {
-      const response = await fetch(`${Config.MiniMax.API_BASE}/text/chatcompletion_v2`, {
+      const response = await fetch(`${Config.MiniMax.API_BASE}/lyrics_generation`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${apiKey}`
         },
         body: JSON.stringify({
-          model: model,
-          max_tokens: 512,
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: `请为主题「${theme}」创作歌词` }
-          ]
+          mode: 'write_full_song',
+          prompt: theme
         })
       });
 
@@ -296,8 +295,15 @@ const AI = {
       }
 
       const data = await response.json();
-      const lyrics = data.choices?.[0]?.message?.content || '';
-      return { lyrics: lyrics.trim() };
+      // MiniMax 歌词生成返回格式: { song_title: "...", style_tags: "...", lyrics: "..." }
+      if (data.lyrics) {
+        return {
+          lyrics: data.lyrics,
+          title: data.song_title || '',
+          style: data.style_tags || ''
+        };
+      }
+      return { error: '生成失败，请重试' };
     } catch (error) {
       if (error.message.includes('fetch')) {
         return { error: '网络错误，请检查网络连接' };
