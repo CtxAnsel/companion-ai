@@ -211,30 +211,36 @@ const AI = {
   },
 
   // 调用 MiniMax 音乐生成 API
-  async generateMusic(prompt) {
+  async generateMusic(prompt, lyrics = null) {
     const apiKey = Config.getApiKey(Config.Provider.MINIMAX);
     if (!apiKey) {
       return { error: '请先在设置中配置 MiniMax API Key' };
     }
 
     const config = Config.load();
-    const model = config.musicModel || Config.MiniMax.MUSIC_DEFAULT_MODEL;
+    const model = config.musicModel || 'music-2.5';
 
     try {
-      const response = await fetch(`${Config.MiniMax.API_BASE}/musicGeneration`, {
+      const requestBody = {
+        model: model,
+        prompt: prompt
+      };
+
+      // 如果提供了歌词，添加到请求中
+      if (lyrics) {
+        requestBody.lyrics = lyrics;
+      }
+
+      const response = await fetch(`${Config.MiniMax.API_BASE}/music_generation`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${apiKey}`
         },
-        body: JSON.stringify({
-          model: model,
-          prompt: prompt
-        })
+        body: JSON.stringify(requestBody)
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
         if (response.status === 401) {
           return { error: 'MiniMax API Key 无效，请检查设置' };
         }
@@ -242,8 +248,69 @@ const AI = {
       }
 
       const data = await response.json();
-      // MiniMax 音乐生成返回格式: { data: [{ url: "..." }] }
-      return { url: data.data?.[0]?.url || null };
+      // MiniMax 音乐生成返回格式: { data: { audio: "hex编码", status: 2 } }
+      // status=2 表示生成完成，audio 是 hex 编码的音频数据
+      if (data.data?.audio) {
+        // 将 hex 音频数据转换为可播放的 URL
+        const audioUrl = this.hexToAudioUrl(data.data.audio);
+        return { url: audioUrl };
+      }
+      return { error: '生成失败，请重试' };
+    } catch (error) {
+      if (error.message.includes('fetch')) {
+        return { error: '网络错误，请检查网络连接' };
+      }
+      return { error: error.message };
+    }
+  },
+
+  // 将 hex 编码的音频数据转换为可播放的 URL
+  hexToAudioUrl(hexString) {
+    const bytes = new Uint8Array(hexString.length / 2);
+    for (let i = 0; i < hexString.length; i += 2) {
+      bytes[i / 2] = parseInt(hexString.substr(i, 2), 16);
+    }
+    const blob = new Blob([bytes], { type: 'audio/mp3' });
+    return URL.createObjectURL(blob);
+  },
+
+  // 生成歌词（使用 MiniMax 专用歌词生成 API）
+  async generateLyrics(theme) {
+    const apiKey = Config.getApiKey(Config.Provider.MINIMAX);
+    if (!apiKey) {
+      return { error: '请先在设置中配置 MiniMax API Key' };
+    }
+
+    try {
+      const response = await fetch(`${Config.MiniMax.API_BASE}/lyrics_generation`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          mode: 'write_full_song',
+          prompt: theme
+        })
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          return { error: 'MiniMax API Key 无效，请检查设置' };
+        }
+        return { error: `歌词生成失败: ${response.status}` };
+      }
+
+      const data = await response.json();
+      // MiniMax 歌词生成返回格式: { song_title: "...", style_tags: "...", lyrics: "..." }
+      if (data.lyrics) {
+        return {
+          lyrics: data.lyrics,
+          title: data.song_title || '',
+          style: data.style_tags || ''
+        };
+      }
+      return { error: '生成失败，请重试' };
     } catch (error) {
       if (error.message.includes('fetch')) {
         return { error: '网络错误，请检查网络连接' };

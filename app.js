@@ -32,6 +32,14 @@
     musicPrompt: null,
     musicGenerate: null,
     musicResult: null,
+    lyricsBtn: null,
+    lyricsPanel: null,
+    lyricsClose: null,
+    lyricsTheme: null,
+    lyricsGenerate: null,
+    lyricsResult: null,
+    lyricsMusicSection: null,
+    lyricsToMusic: null,
   };
 
   // 配置
@@ -98,6 +106,14 @@
     elements.musicPrompt = document.getElementById('music-prompt');
     elements.musicGenerate = document.getElementById('music-generate');
     elements.musicResult = document.getElementById('music-result');
+    elements.lyricsBtn = document.getElementById('lyrics-btn');
+    elements.lyricsPanel = document.getElementById('lyrics-panel');
+    elements.lyricsClose = document.getElementById('lyrics-close');
+    elements.lyricsTheme = document.getElementById('lyrics-theme');
+    elements.lyricsGenerate = document.getElementById('lyrics-generate');
+    elements.lyricsResult = document.getElementById('lyrics-result');
+    elements.lyricsMusicSection = document.getElementById('lyrics-music-section');
+    elements.lyricsToMusic = document.getElementById('lyrics-to-music');
 
     // 填充已有设置
     elements.apiKey.value = config.apiKey || '';
@@ -119,9 +135,12 @@
   function updateMusicButtonVisibility(provider) {
     if (provider === 'minimax') {
       elements.musicBtn.style.display = 'block';
+      elements.lyricsBtn.style.display = 'block';
     } else {
       elements.musicBtn.style.display = 'none';
+      elements.lyricsBtn.style.display = 'none';
       elements.musicPanel.classList.add('hidden');
+      elements.lyricsPanel.classList.add('hidden');
     }
   }
 
@@ -181,6 +200,16 @@
       elements.musicPanel.classList.add('hidden');
     });
     elements.musicGenerate.addEventListener('click', generateMusic);
+
+    // 歌词面板事件
+    elements.lyricsBtn.addEventListener('click', () => {
+      elements.lyricsPanel.classList.toggle('hidden');
+    });
+    elements.lyricsClose.addEventListener('click', () => {
+      elements.lyricsPanel.classList.add('hidden');
+    });
+    elements.lyricsGenerate.addEventListener('click', generateLyrics);
+    elements.lyricsToMusic.addEventListener('click', useLyricsForMusic);
 
     // 键盘活动监听
     document.addEventListener('keypress', () => {
@@ -322,6 +351,96 @@
 
     try {
       const response = await AI.generateMusic(prompt);
+
+      if (response.error) {
+        elements.musicResult.innerHTML = `<span style="color:red;">${response.error}</span>`;
+      } else if (response.url) {
+        elements.musicResult.innerHTML = `
+          <div style="margin-top:10px;">
+            <audio controls src="${response.url}">
+              您的浏览器不支持音频播放
+            </audio>
+            <br/>
+            <a href="${response.url}" target="_blank" download>下载音乐</a>
+          </div>
+        `;
+      } else {
+        elements.musicResult.innerHTML = '<span style="color:red;">生成失败，请重试</span>';
+      }
+    } catch (error) {
+      elements.musicResult.innerHTML = `<span style="color:red;">错误: ${error.message}</span>`;
+    } finally {
+      elements.musicGenerate.disabled = false;
+    }
+  }
+
+  // 生成歌词
+  let currentLyrics = '';
+  let currentLyricsForMusic = null;  // 存储要用于生成音乐的歌词
+
+  async function generateLyrics() {
+    const theme = elements.lyricsTheme.value.trim();
+    if (!theme) {
+      elements.lyricsResult.innerHTML = '<span style="color:red;">请输入歌词主题</span>';
+      return;
+    }
+
+    elements.lyricsGenerate.disabled = true;
+    elements.lyricsResult.innerHTML = '📝 正在生成歌词...';
+    elements.lyricsMusicSection.classList.add('hidden');
+
+    try {
+      const response = await AI.generateLyrics(theme);
+
+      if (response.error) {
+        elements.lyricsResult.innerHTML = `<span style="color:red;">${response.error}</span>`;
+      } else if (response.lyrics) {
+        currentLyrics = response.lyrics;
+        currentLyricsForMusic = response.lyrics;  // 保存歌词用于生成音乐
+        elements.lyricsResult.innerHTML = `<pre style="white-space:pre-wrap;word-wrap:break-word;max-height:200px;overflow-y:auto;background:var(--bg-dark);padding:10px;border-radius:8px;margin:10px 0;">${currentLyrics}</pre>`;
+        elements.lyricsMusicSection.classList.remove('hidden');
+      } else {
+        elements.lyricsResult.innerHTML = '<span style="color:red;">生成失败，请重试</span>';
+      }
+    } catch (error) {
+      elements.lyricsResult.innerHTML = `<span style="color:red;">错误: ${error.message}</span>`;
+    } finally {
+      elements.lyricsGenerate.disabled = false;
+    }
+  }
+
+  // 用歌词生成音乐
+  function useLyricsForMusic() {
+    const lyricsToUse = currentLyrics;
+    if (!lyricsToUse || !lyricsToUse.trim()) {
+      elements.lyricsResult.innerHTML = '<span style="color:red;">请先生成歌词</span>';
+      return;
+    }
+
+    // 关闭歌词面板
+    elements.lyricsPanel.classList.add('hidden');
+
+    // 打开音乐面板
+    elements.musicPanel.classList.remove('hidden');
+    elements.musicResult.innerHTML = '';
+
+    // 清空歌词显示但保留用于生成
+    currentLyrics = '';
+    elements.lyricsTheme.value = '';
+    elements.lyricsResult.innerHTML = '';
+    elements.lyricsMusicSection.classList.add('hidden');
+
+    // 直接用歌词生成音乐（prompt描述音乐风格，lyrics传歌词）
+    generateMusicWithLyrics('抒情，温柔，流行', lyricsToUse);
+  }
+
+  // 使用指定歌词生成音乐
+  async function generateMusicWithLyrics(stylePrompt, lyrics) {
+    elements.musicGenerate.disabled = true;
+    elements.musicResult.innerHTML = '🎵 正在生成音乐...';
+
+    try {
+      const response = await AI.generateMusic(stylePrompt, lyrics);
 
       if (response.error) {
         elements.musicResult.innerHTML = `<span style="color:red;">${response.error}</span>`;
